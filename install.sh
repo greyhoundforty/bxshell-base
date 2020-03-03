@@ -4,6 +4,7 @@ set -e
 echo "Installing dependencies..."
 apt-get -qq update && apt-get -qq install -y \
   apt-transport-https \
+  apache2-utils \
   bash-completion \
   ca-certificates \
   curl \
@@ -25,6 +26,7 @@ apt-get -qq update && apt-get -qq install -y \
   python-virtualenv \
   python-setuptools \
   python-pip \
+  python3-pip \
   silversearcher-ag \
   software-properties-common \
   sudo \
@@ -49,12 +51,25 @@ add-apt-repository \
 apt-get -qq update && apt-get -qq -y install docker-ce
 
 # Terraform
-echo "Terraform"
-curl -LO "https://releases.hashicorp.com/terraform/$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M '.current_version')/terraform_$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M '.current_version')_linux_amd64.zip" && \
-  unzip terraform*.zip && \
-  rm -f terraform*.zip && \
-  chmod 755 terraform && \
-  mv terraform /usr/local/bin
+echo "Terraform (latest)"
+latest_terraform_version=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r -M '.current_version')
+curl -LO "https://releases.hashicorp.com/terraform/${latest_terraform_version}/terraform_${latest_terraform_version}_linux_amd64.zip"
+unzip terraform_${latest_terraform_version}_linux_amd64.zip terraform
+mv terraform /usr/local/bin/terraform-${latest_terraform_version}
+ln -s /usr/local/bin/terraform-${latest_terraform_version} /usr/local/bin/terraform-latest
+rm -f terraform_${latest_terraform_version}_linux_amd64.zip
+
+echo "Terraform (0.11.14)"
+curl -LO "https://releases.hashicorp.com/terraform/0.11.14/terraform_0.11.14_linux_amd64.zip"
+unzip terraform_0.11.14_linux_amd64.zip terraform
+mv terraform /usr/local/bin/terraform-0.11.14
+ln -s /usr/local/bin/terraform-0.11.14 /usr/local/bin/terraform
+rm -f terraform_0.11.14_linux_amd64.zip
+
+# Ansible
+echo "Ansible"
+apt-add-repository --yes --update ppa:ansible/ansible
+apt-get install -qq -y ansible
 
 # Yarn
 echo "Yarn"
